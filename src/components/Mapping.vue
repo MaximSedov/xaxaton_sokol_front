@@ -1,6 +1,6 @@
 <template>
   <div style="height: 100%; width: 100%">
-     <Toast position="top-center" />
+    <Toast position="top-center" />
     <!-- Карта -->
     <l-map v-if="showMap" :zoom="zoom" :center="center" :options="mapOptions" style="height: 100%" @click="addMarker" @update:center="centerUpdate" @update:zoom="zoomUpdate">
       <l-tile-layer :url="url" :attribution="attribution" />
@@ -12,7 +12,7 @@
       <l-marker v-for="marker, idx in markers" :key="marker[idx]" :lat-lng="marker" @click="removeMarker(idx)" :icon="icon" />
 
       <!-- Зоны -->
-      <!-- <l-circle
+      <l-circle
         v-for="(circle, index) in circle"
         v-if="sensors"
         :key="index"
@@ -23,7 +23,7 @@
         :stroke="false"
         :fillColor="circle.fillColor"
         :className="`sensor`"
-      /> -->
+      />
       <!-- Маршрут  -->
       <l-polyline
         v-for="(line, idx) in polyline"
@@ -126,25 +126,61 @@
           </div>
         </TabPanel>
       </TabView>
-      <SelectButton class="p-mt-2" style="display: flex;justify-content: start;" v-model="selectedType" :options="types" optionLabel="name" />
+
+      <SelectButton class="p-mt-2" style="display: flex;justify-content: start;" v-model="selectedType" :options="types" />
 
       <template #footer>
         <Button v-if="markers.length >=2" @click="finishRoute" label="Завершить" icon="pi pi-times" class="p-button-text" />
         <Button v-if="loadRoute" label="Строим" icon="pi pi-spin pi-spinner" disabled />
-        <Button v-if="!loadRoute" @click="findRoutes" label="Проложить" icon="pi pi-map" :disabled="countryFrom == null || countryTo == null"/>
+        <Button v-if="!loadRoute" @click="findRoutes" label="Проложить" icon="pi pi-map" :disabled="countryFrom == null || countryTo == null" />
+      </template>
+    </Dialog>
+
+    <!-- Подробнее о маршрутах -->
+    <Dialog :visible.sync="displayRoutes" position="topright" @click.stop>
+      <template #header>
+        <h3>Варианты маршрутов</h3>
       </template>
 
-      
+      <p v-for="(line, indx) in polyline" :key="line[indx]"> </p>
+      <Card v-for="(line, indx) in polyline" :key="line[indx]">
+        <template #header>
+        </template>
+        <template #title>Маршрут {{indx}}</template>
+        <template #content>
+          Дистанция {{line.dist}}
+          Время {{line.time}}
+        </template>
+      </Card>
+
+      <template #footer>
+        <Button label="Завершить" icon="pi pi-times" class="p-button-text" />
+      </template>
     </Dialog>
+
+    <!-- Рейтинг маршрута -->
+    <Dialog :modal="true" position="top" header="Оцените маршрут" :visible.sync="ratingDialog">
+      <template #header>
+        <h3>Оцените маршрут</h3>
+      </template>
+
+      <Rating v-model="rating" :cancel="false" />
+
+      <template #footer>
+        <Button @click="ratingDialog = false; rating = 0" label="Отмена" icon="pi pi-times" class="p-button-text" />
+        <Button @click="ratingDialog = false; rating = 0" label="Ок" icon="pi pi-check" autofocus />
+      </template>
+    </Dialog>
+
     <!-- <div style="height: 5%; overflow: auto;">
       <p>First marker is placed at {{ withPopup.lat }}, {{ withPopup.lng }}</p>
       <p>Центр: {{ currentCenter }} зум: {{ currentZoom }}</p>
-    </div> -->
+    </div>-->
   </div>
 </template>
 
 <script>
-import { latLng } from "leaflet";
+import { latLng, Polyline } from "leaflet";
 const axios = require("axios");
 import {
   LMap,
@@ -185,9 +221,11 @@ export default {
   },
   data() {
     return {
-      componentKey: 0,
+      rating: 0,
+      ratingDialog: false,
       sensors: true,
       display: false,
+      displayRoutes: false,
       checked: true,
       active: 0,
       countryTo: null,
@@ -203,43 +241,10 @@ export default {
         { name: "Китай город", code: "DZ" },
         { name: "Парк Зарядье", code: "AD" }
       ],
-      selectedType: null,
-      types: [
-        { name: "Пешком", code: "LND" },
-        { name: "Самокат", code: "PRS" },
-        { name: "Велосипед", code: "RM" }
-      ],
+      selectedType: "Пешком",
+      types: ["Пешком", "Самокат", "Велосипед"],
       zoom: 13,
       center: latLng(55.7504461, 37.6174943),
-      polygon: {
-        latlngs: [
-          [55.7957880895471, 37.376684908203096],
-          [55.7315234841734, 37.364325289062464],
-          [55.697412346005066, 37.39453769140622],
-          [55.68267328730198, 37.40827060156247],
-          [55.636869056546395, 37.453589205078075],
-          [55.594899347399334, 37.4989078085937],
-          [55.57156334252638, 37.596411470703096],
-          [55.57234143382528, 37.69116855078122],
-          [55.631431083789636, 37.817511324218714],
-          [55.65084893483958, 37.850470308593714],
-          [55.69198281565908, 37.833990816406214],
-          [55.7082691348538, 37.846350435546846],
-          [55.763281945079946, 37.85321689062496],
-          [55.81821691873245, 37.84909701757809],
-          [55.896229854864345, 37.7186343710937],
-          [55.89854466574232, 37.633490328124964],
-          [55.91397319398547, 37.58817172460933],
-          [55.91243061851775, 37.54285312109371],
-          [55.88388185420568, 37.474188570312464],
-          [55.88388185420568, 37.44946933203121],
-          [55.87461826417799, 37.411017183593714],
-          [55.85222208945518, 37.39453769140622],
-          [55.83135882022269, 37.40003085546871]
-        ],
-        color: "#007bff",
-        fill: false
-      },
       polyline: [
         {
           latlngs: [],
@@ -278,14 +283,17 @@ export default {
       this.currentCenter = center;
     },
     addMarker(event) {
+      this.display = true;
       if (this.markers.length < 2) {
         this.markers.push(event.latlng);
         if (this.countryFrom == null) {
-          this.countryFrom = event.latlng.lng.toFixed(6) + ',' + event.latlng.lat.toFixed(6)
-        }else if (this.countryTo == null) {
-          this.countryTo = event.latlng.lng.toFixed(6) + ',' + event.latlng.lat.toFixed(6)
+          this.countryFrom =
+            event.latlng.lng.toFixed(6) + "," + event.latlng.lat.toFixed(6);
+        } else if (this.countryTo == null) {
+          this.countryTo =
+            event.latlng.lng.toFixed(6) + "," + event.latlng.lat.toFixed(6);
         }
-        console.log(event.latlng)
+        console.log(event.latlng);
       }
 
       // console.log(this.waypoints);
@@ -318,7 +326,7 @@ export default {
     },
     openControl() {
       this.display = !this.display;
-      /* this.$refs['focusButton'].$el.focus() */
+      //console.log(this.selectedType.name)
     },
     finishRoute() {
       this.countryTo = null;
@@ -326,14 +334,19 @@ export default {
       this.countryWalk = null;
       this.polyline = [];
       this.markers = [];
+      this.ratingDialog = true;
     },
     findRoutes() {
       this.loadRoute = true;
       axios
         .get(
-          "http://45.80.71.155:5000/route?from=" + this.countryFrom + "&to=" + this.countryTo
+          "http://45.80.71.155:5000/route?from=" +
+            this.countryFrom +
+            "&to=" +
+            this.countryTo
         )
         .then(response => {
+          //console.log(response)
           let lastitem = response.data.length - 1;
           this.polyline = [];
           for (let index = 0; index < response.data.length; index++) {
@@ -349,9 +362,12 @@ export default {
             let obj = {
               latlngs: [response.data[index].waypoints],
               color: color,
-              weight: weight
+              weight: weight,
+              dist: response.data[index].dist,
+              time: response.data[index].time
             };
             this.polyline.push(obj);
+            console.log(this.polyline);
           }
           /* this.markers.push(
             L.latLng(
@@ -369,10 +385,15 @@ export default {
               ].lng
             )
           ); */
-          this.loadRoute = false;
+          (this.displayRoutes = true), (this.loadRoute = false);
         })
         .catch(error => {
-          this.$toast.add({severity:'error', summary: 'Ошибка', detail:'Неверные данные', life: 3000});
+          this.$toast.add({
+            severity: "error",
+            summary: "Ошибка",
+            detail: "Неверные данные",
+            life: 3000
+          });
           this.loadRoute = false;
         });
     },
@@ -381,20 +402,18 @@ export default {
       layer.bringToFront();
       let wei = layer.options.weight;
       let colorr = layer.options.color;
-      let flag = false
+      let flag = false;
       if (wei == 10 && colorr == "#007bff") {
-        console.log('зашел')
+        console.log("зашел");
         layer.setStyle({ weight: 10, color: "green" });
-        flag = true
+        flag = true;
       } else if (wei == 10 && colorr == "green" && flag == false) {
         layer.setStyle({ weight: 6, color: "gray" });
         layer.bringToBack();
-      }
-      else if (wei == 10 && colorr == "green" && flag == true) {
+      } else if (wei == 10 && colorr == "green" && flag == true) {
         layer.setStyle({ weight: 6, color: "#007bff" });
         layer.bringToBack();
-      }
-      else if (wei == 6 && colorr == "gray") {
+      } else if (wei == 6 && colorr == "gray") {
         layer.setStyle({ weight: 10, color: "green" });
       }
     },
@@ -413,7 +432,7 @@ export default {
   },
   mounted() {
     axios
-      .get("http://45.67.56.16:5000/zones")
+      .get("http://45.80.71.155:5000/zones")
       .then(response => {
         //console.log(response.data.sensors);
         for (let index = 0; index < response.data.sensors.length; index++) {
@@ -496,9 +515,6 @@ export default {
     margin-top: 8rem !important;
     border: none !important;
     z-index: 999999 !important;
-    &-content {
-      height: 14rem;
-    }
     &-footer {
       display: flex;
       justify-content: space-between;
@@ -545,7 +561,7 @@ export default {
         color: #ffffff !important;
         box-shadow: none !important;
       }
-      &.p-selectbutton .p-button.p-highlight:focus {
+      &.p-highlight {
         background: #007bff !important;
         border: 1px solid #007bff !important;
         color: #ffffff !important;
@@ -553,12 +569,30 @@ export default {
       }
     }
   }
+  &-card{
+    margin-bottom: 0.5rem !important;
+    &-title{
+      font-size: 1.2rem !important;
+      text-align: left !important;
+    }
+    &-body{
+      padding: 0.5rem !important;
+    }
+    &-content{
+      padding: 0 !important;
+    }
+  }
 }
 
-.routeControl .p-button.p-button-text:enabled:focus {
-  background: rgba(0, 123, 255, 0.16);
-  color: #007bff;
-  border-color: transparent;
+.routeControl {
+  .p-button.p-button-text:enabled:focus {
+    background: rgba(0, 123, 255, 0.16);
+    color: #007bff;
+    border-color: transparent;
+  }
+  &-active {
+    background: rgba(0, 123, 255, 0.16) !important;
+  }
 }
 
 @media (max-width: 767px) {
