@@ -187,6 +187,7 @@
 <script>
 import { latLng, Polyline } from "leaflet";
 const axios = require("axios");
+const host = '45.80.71.155:5000'
 import {
   LMap,
   LTileLayer,
@@ -358,7 +359,7 @@ export default {
       this.loadRoute = true;
       axios
         .get(
-          "http://45.80.71.155:5000/route?from=" +
+          "http://"+host+"/route?from=" +
             this.countryFrom +
             "&to=" +
             this.countryTo +
@@ -413,7 +414,7 @@ export default {
       this.loadRoute = true;
       axios
         .get(
-          "http://45.80.71.155:5000/walking?from=" +
+          "http://"+host+"/walking?from=" +
             this.countryWalk +
             "&time=" +
             this.walkTime +
@@ -488,7 +489,7 @@ export default {
   },
   mounted() {
     axios
-      .get("http://45.80.71.155:5000/zones")
+      .get("http://"+host+"/zones")
       .then(response => {
         for (let index = 0; index < response.data.sensors.length; index++) {
           let obj = {
