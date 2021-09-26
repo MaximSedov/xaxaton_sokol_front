@@ -21,6 +21,7 @@ import ConfirmationService from 'primevue/confirmationservice';
 import ConfirmDialog from 'primevue/confirmdialog';
 import Rating from 'primevue/rating';
 import Card from 'primevue/card';
+import InputNumber from 'primevue/inputnumber';
 
 /* Leaflet */
 import { LMap, LTileLayer, LMarker } from 'vue2-leaflet'
@@ -50,6 +51,7 @@ Vue.component('Toast', Toast)
 Vue.component('ConfirmDialog', ConfirmDialog)
 Vue.component('Rating', Rating)
 Vue.component('Card', Card)
+Vue.component('InputNumber', InputNumber)
 
 Vue.component('LMap', LMap)
 Vue.component('LTileLayer', LTileLayer)
