@@ -32,9 +32,8 @@
           <!-- Иконки -->
           <!-- <l-marker :lat-lng="point"  icon-url="bike.svg"></l-marker> -->
           <l-marker :lat-lng="point">
-            <l-icon :icon-size="[52, 100]" icon-url="bike.svg" >
-</l-icon>
-</l-marker>
+            <l-icon :icon-size="[52, 100]" icon-url="bike.svg"></l-icon>
+          </l-marker>
         </div>
         <l-polyline
           @click="selectRoute($event)"
@@ -187,7 +186,7 @@
 <script>
 import { latLng, Polyline } from "leaflet";
 const axios = require("axios");
-const host = '45.80.71.155:5000'
+const host = "45.80.71.155:5000";
 import {
   LMap,
   LTileLayer,
@@ -359,7 +358,9 @@ export default {
       this.loadRoute = true;
       axios
         .get(
-          "http://"+host+"/route?from=" +
+          "http://" +
+            host +
+            "/route?from=" +
             this.countryFrom +
             "&to=" +
             this.countryTo +
@@ -368,7 +369,7 @@ export default {
         )
         .then(response => {
           this.polyline = response.data;
-          console.log(this.polyline)
+          console.log(this.polyline);
           for (let index = 0; index < response.data.length; index++) {
             let vehicle = "";
             if (this.selectedType.value == "foot") {
@@ -414,7 +415,9 @@ export default {
       this.loadRoute = true;
       axios
         .get(
-          "http://"+host+"/walking?from=" +
+          "http://" +
+            host +
+            "/walking?from=" +
             this.countryWalk +
             "&time=" +
             this.walkTime +
@@ -489,7 +492,7 @@ export default {
   },
   mounted() {
     axios
-      .get("http://"+host+"/zones")
+      .get("http://" + host + "/zones")
       .then(response => {
         for (let index = 0; index < response.data.sensors.length; index++) {
           let obj = {
