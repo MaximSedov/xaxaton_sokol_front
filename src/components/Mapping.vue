@@ -5,9 +5,6 @@
     <l-map v-if="showMap" :zoom="zoom" :center="center" :options="mapOptions" style="height: 100%" @click="addMarker" @update:center="centerUpdate" @update:zoom="zoomUpdate">
       <l-tile-layer :url="url" :attribution="attribution" />
 
-      <!-- Полигоны -->
-      <!--  <l-polygon :lat-lngs="polygon.latlngs" :color="polygon.color" :fill="polygon.fill" :className="`polygon`"></l-polygon> -->
-
       <!-- Маркеры -->
       <l-marker v-for="(marker, idx) in markers" :key="marker[idx]" :lat-lng="marker" @click="removeMarker(idx)" :icon="icon" />
 
@@ -24,18 +21,29 @@
         :fillColor="circle.fillColor"
         :className="`sensor`"
       />
-        <!-- Маршрут  -->
+      <!-- Маршрут  -->
 
-        <!-- @mouseleave="hideRoute($event)"
+      <!-- @mouseleave="hideRoute($event)"
         @mouseover="showRoute($event)"
-        @click="selectRoute($event)" -->
+      @click="selectRoute($event)"-->
 
       <div v-for="(line, idx) in polyline" :key="line[idx]" class>
-        <div v-for="(point, idx) in line.points" :key="point[idx]" class="">
-        <l-marker :lat-lng="point" :icon="bike"></l-marker>
+        <div v-for="(point, idx) in line.points" :key="point[idx]" class>
+          <!-- Иконки -->
+          <!-- <l-marker :lat-lng="point"  icon-url="bike.svg"></l-marker> -->
+          <l-marker :lat-lng="point">
+            <l-icon :icon-size="[52, 100]" icon-url="bike.svg" >
+</l-icon>
+</l-marker>
         </div>
-        <l-polyline @click="selectRoute($event)" v-for="(waypoints, idx) in line.waypoints" :key="waypoints[idx]" :lat-lngs="waypoints.waypoint" :color="waypoints.color" :weight="6">
-        </l-polyline>
+        <l-polyline
+          @click="selectRoute($event)"
+          v-for="(waypoints, idx) in line.waypoints"
+          :key="waypoints[idx]"
+          :lat-lngs="waypoints.waypoint"
+          :color="waypoints.color"
+          :weight="6"
+        ></l-polyline>
       </div>
 
       <!-- Управление на карте -->
@@ -70,13 +78,11 @@
       <l-control position="bottomright" class="control">
         <Slider v-model="zoom" orientation="vertical" :step="mapOptions.zoomSnap" :min="mapOptions.minZoom" :max="mapOptions.maxZoom" />
       </l-control>
-
     </l-map>
 
     <!-- Окно выбора маршрута -->
     <Dialog :visible.sync="display" position="topleft" @click.stop>
       <template #header>
-        <!-- <h3>Маршрут <span @click="displayRoutes = true; display = false" style="font-size:0.8rem;">подробно</span></h3> -->
         <h3>Маршрут</h3>
       </template>
       <div class="routeControl" style="display: flex; justify-content: space-between;">
@@ -87,7 +93,14 @@
         <TabPanel header="Из А в Б">
           <div class="p-grid p-nogutter p-ai-center p-mt-2">
             <div class="p-col-12">
-              <AutoComplete :disabled="true" @click.stop v-model="countryFrom" :suggestions="filteredCountries" @complete="searchCountry($event)" :field="(item) => item.name + ' ' + item.code" />
+              <AutoComplete
+                :disabled="true"
+                @click.stop
+                v-model="countryFrom"
+                :suggestions="filteredCountries"
+                @complete="searchCountry($event)"
+                :field="(item) => item.name + ' ' + item.code"
+              />
             </div>
           </div>
           <div class="p-grid p-nogutter p-ai-center p-mt-2">
@@ -99,23 +112,35 @@
         <TabPanel header="Прогулка">
           <div class="p-grid p-nogutter p-ai-center p-mt-2">
             <div class="p-col-12">
-              <AutoComplete :disabled="true" v-model="countryWalk" :suggestions="filteredCountries" @complete="searchCountry($event)" :field="(item) => item.name + ' ' + item.code" />
+              <AutoComplete
+                :disabled="true"
+                v-model="countryWalk"
+                :suggestions="filteredCountries"
+                @complete="searchCountry($event)"
+                :field="(item) => item.name + ' ' + item.code"
+              />
             </div>
           </div>
-            <div class="p-ai-center p-mt-2">
+          <div class="p-ai-center p-mt-2">
             <div class="p-col-12">Время прогулки (м)</div>
             <InputNumber v-model="walkTime" mode="decimal" showButtons :min="15" :max="300" :step="15" />
-            </div>
+          </div>
         </TabPanel>
       </TabView>
 
       <SelectButton class="p-mt-2" style="display: flex;justify-content: start;" v-model="selectedType" :options="types" optionLabel="name" />
 
       <template #footer>
-        <Button v-if="markers.length >= 2 || walkTime != 0" @click="finishRoute" label="Завершить" icon="pi pi-times" class="p-button-text" />
+        <Button v-if="markers.length >= 2 || walkTime != 0" @click="finishRoute" label="Завершить" icon="pi pi-times" class="p-button-text" :disabled="loadRoute" />
         <Button v-if="loadRoute" label="Строим" icon="pi pi-spin pi-spinner" disabled />
         <Button v-if="!loadRoute && active == 0" @click="findRoutes" label="Дойти" icon="pi pi-map" :disabled="(countryFrom == null || countryTo == null) || selectedType == null" />
-        <Button v-if="!loadRoute && active == 1" @click="walkRoutes" label="Прогуляться" icon="pi pi-map" :disabled="(countryWalk == null || walkTime == 0) || selectedType == null" />
+        <Button
+          v-if="!loadRoute && active == 1"
+          @click="walkRoutes"
+          label="Прогуляться"
+          icon="pi pi-map"
+          :disabled="(countryWalk == null || walkTime == 0) || selectedType == null"
+        />
       </template>
     </Dialog>
 
@@ -123,7 +148,8 @@
     <Dialog :visible.sync="displayRoutes" position="topleft" @hide="display = true" @click.stop>
       <template #header>
         <h3>Варианты маршрутов</h3>
-      </template> <!-- :style="indx == 0 ? {'background-color' : line.color} : {'background-color':'rgba(0, 123, 255, 0.6)'}" -->
+      </template>
+      <!-- :style="indx == 0 ? {'background-color' : line.color} : {'background-color':'rgba(0, 123, 255, 0.6)'}" -->
       <Card v-for="(line, index) in polyline" :key="line[index]" :style="{'background-color':'rgba(0, 123, 255, 0.6)'}">
         <template #header></template>
         <template #title>
@@ -155,11 +181,6 @@
         <Button @click="ratingDialog = false; rating = 0" label="Ок" icon="pi pi-check" autofocus />
       </template>
     </Dialog>
-
-    <!-- <div style="height: 5%; overflow: auto;">
-      <p>First marker is placed at {{ withPopup.lat }}, {{ withPopup.lng }}</p>
-      <p>Центр: {{ currentCenter }} зум: {{ currentZoom }}</p>
-    </div>-->
   </div>
 </template>
 
@@ -223,6 +244,7 @@ export default {
       walkTime: 0,
       findRoutesObj: [],
       countries: [
+        //Для автокомплита
         { name: "Красная площадь", code: "AF" },
         { name: "Арбат", code: "AL" },
         { name: "Китай город", code: "DZ" },
@@ -241,8 +263,6 @@ export default {
       url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
       attribution:
         '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
-      //withPopup: latLng(47.41322, -1.219482),
-      //withTooltip: latLng(47.41422, -1.250482),
       currentZoom: 13,
       currentCenter: latLng(55.7504461, 37.6174943),
       showParagraph: false,
@@ -257,11 +277,11 @@ export default {
         iconSize: [32, 80]
       }),
       bike: L.icon({
-        iconUrl: "bicycle.svg",
+        iconUrl: "bike.svg",
         iconSize: [52, 100]
       }),
-      interes: L.icon({
-        iconUrl: "interes.svg",
+      intres: L.icon({
+        iconUrl: "intres.svg",
         iconSize: [52, 100]
       }),
       markers: [],
@@ -286,7 +306,7 @@ export default {
         if (this.countryFrom == null) {
           this.countryFrom =
             event.latlng.lng.toFixed(6) + "," + event.latlng.lat.toFixed(6);
-          this.countryWalk = this.countryFrom 
+          this.countryWalk = this.countryFrom;
         } else if (this.countryTo == null) {
           this.countryTo =
             event.latlng.lng.toFixed(6) + "," + event.latlng.lat.toFixed(6);
@@ -320,7 +340,6 @@ export default {
     },
     openControl() {
       this.display = !this.display;
-      //console.log(this.selectedType.name)
     },
     finishRoute() {
       this.countryTo = null;
@@ -328,22 +347,76 @@ export default {
       this.countryWalk = null;
       this.walkTime = 0;
       this.polyline = [];
-      this.markers = [];
       this.displayRoutes = false;
       this.walkRoute = [];
+      this.markers = [];
     },
     rateRoute() {
       this.ratingDialog = true;
     },
     findRoutes() {
       this.loadRoute = true;
-      console.log(this.selectedType.value);
       axios
         .get(
           "http://45.80.71.155:5000/route?from=" +
             this.countryFrom +
             "&to=" +
             this.countryTo +
+            "&vehicle=" +
+            this.selectedType.value
+        )
+        .then(response => {
+          this.polyline = response.data;
+          console.log(this.polyline)
+          for (let index = 0; index < response.data.length; index++) {
+            let vehicle = "";
+            if (this.selectedType.value == "foot") {
+              vehicle = "Пешком";
+            }
+            if (this.selectedType.value == "bike") {
+              vehicle = "Велосипед";
+            }
+            if (this.selectedType.value == "scooter") {
+              vehicle = "Самокат";
+            }
+            let timestamp = Math.floor(response.data[index].time / 1000);
+            let hours = Math.floor(timestamp / 60 / 60);
+            let minutes = Math.floor(timestamp / 60) - hours * 60;
+            let seconds = timestamp % 60;
+            let formatted = [
+              hours.toString().padStart(2, "0"),
+              minutes.toString().padStart(2, "0"),
+              seconds.toString().padStart(2, "0")
+            ].join(":");
+            let obj = {
+              time: formatted,
+              vehicle: vehicle
+            };
+            this.findRoutesObj.push(obj);
+          }
+
+          this.displayRoutes = true;
+          this.display = false;
+          this.loadRoute = false;
+        })
+        .catch(error => {
+          this.$toast.add({
+            severity: "error",
+            summary: "Ошибка",
+            detail: "Неверные данные",
+            life: 3000
+          });
+          this.loadRoute = false;
+        });
+    },
+    walkRoutes() {
+      this.loadRoute = true;
+      axios
+        .get(
+          "http://45.80.71.155:5000/walking?from=" +
+            this.countryWalk +
+            "&time=" +
+            this.walkTime +
             "&vehicle=" +
             this.selectedType.value
         )
@@ -373,62 +446,9 @@ export default {
               time: formatted,
               vehicle: vehicle
             };
-            this.findRoutesObj.push(obj)
+            this.findRoutesObj.push(obj);
           }
-          
-          this.displayRoutes = true;
-          this.display = false;
-          this.loadRoute = false;
-        })
-        .catch(error => {
-          this.$toast.add({
-            severity: "error",
-            summary: "Ошибка",
-            detail: "Неверные данные",
-            life: 3000
-          });
-          this.loadRoute = false;
-        });
-    },
-    walkRoutes(){
-      this.loadRoute = true;
-      axios
-        .get(
-          "http://45.80.71.155:5000/walking?from=" +
-            this.countryWalk +
-            "&time=" +
-            this.walkTime + "&vehicle=" + this.selectedType.value
-        )
-        .then(response => {
-          this.polyline = response.data;
-          for (let index = 0; index < response.data.length; index++) {
-            let vehicle = "";
-            if (this.selectedType.value == "foot") {
-              vehicle = "Пешком";
-            }
-            if (this.selectedType.value == "bike") {
-              vehicle = "Велосипед";
-            }
-            if (this.selectedType.value == "scooter") {
-              vehicle = "Самокат";
-            }
-            let timestamp = Math.floor(response.data[index].time / 1000);
-            let hours = Math.floor(timestamp / 60 / 60);
-            let minutes = Math.floor(timestamp / 60) - hours * 60;
-            let seconds = timestamp % 60;
-            let formatted = [
-              hours.toString().padStart(2, "0"),
-              minutes.toString().padStart(2, "0"),
-              seconds.toString().padStart(2, "0")
-            ].join(":");
-            let obj = {
-              time: formatted,
-              vehicle: vehicle
-            };
-            this.findRoutesObj.push(obj)
-          }
-          console.log(this.findRoutesObj)
-          
+
           this.displayRoutes = true;
           this.display = false;
           this.loadRoute = false;
@@ -445,10 +465,9 @@ export default {
     },
     selectRoute(event) {
       var layer = event.target;
-      console.log(layer)
       layer.bringToFront();
       let wei = layer.options.weight;
-      if (wei == 6 ) {
+      if (wei == 6) {
         layer.setStyle({ weight: 10, color: "green" });
       } else {
         layer.setStyle({ weight: 6, color: "gray" });
